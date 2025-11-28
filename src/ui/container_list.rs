@@ -151,7 +151,7 @@ fn create_container_row<'a>(
     let (icon, icon_style) = get_status_icon(&container.state, &container.health, styles);
 
     let mut cells = vec![
-        Cell::from(container.id.as_str()),
+        Cell::from(container.id.as_str()).style(styles.container_id),
         Cell::from(icon).style(icon_style),
         Cell::from(container.name.as_str()),
     ];

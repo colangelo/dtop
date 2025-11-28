@@ -27,6 +27,7 @@ pub struct UiStyles {
     pub title_name: Style,
     pub title_count: Style,
     pub title_help: Style,
+    pub container_id: Style,
     pub icons: Icons,
 }
 
@@ -53,6 +54,8 @@ impl Default for UiStyles {
             title_count: Style::default().fg(Color::Yellow),
             // Dark gray for help text
             title_help: Style::default().fg(Color::Rgb(80, 80, 80)),
+            // Dark gray for container IDs
+            container_id: Style::default().fg(Color::Rgb(100, 100, 100)),
             icons: Icons::default(),
         }
     }
