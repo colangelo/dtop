@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0-alpha] - 2025-11-28
+
+### Features
+
+- **Sparkline graphs**: Replace solid progress bars with btop-style braille sparklines showing CPU/memory history over time
+- **Marching tick markers**: Add synchronized tick markers every 5 positions that march from right to left with the data flow
+  - Empty positions show dot (⡀), filled positions show "hole" pattern (⢀⢤⢶⢿)
+  - Ticks advance every 2 seconds, synchronized across all containers using wall clock time
+
+### UI Redesign
+
+- **Rename**: App renamed from `dtop` to `datop`
+- **Title bar styling**:
+  - App name "datop vX.X.X" in dark purple
+  - Container count "N containers" in yellow
+  - Help text "'?' help, 'q' quit" right-aligned in dark gray
+- **Column headers**: Changed from cyan to dark purple
+- **Container IDs**: Dark gray
+- **Network columns**: TX (upload) in pink/magenta, RX (download) in cyan/blue
+- **Created timestamp**: Dark gray
+
 ## [0.5.0] - 2025-11-22
 
 ### Features
