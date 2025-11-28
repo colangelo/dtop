@@ -163,9 +163,9 @@ fn create_container_row<'a>(
     cells.extend(vec![
         Cell::from(cpu_bar).style(cpu_style),
         Cell::from(memory_bar).style(memory_style),
-        Cell::from(network_tx),
-        Cell::from(network_rx),
-        Cell::from(time_elapsed),
+        Cell::from(network_tx).style(styles.network_tx),
+        Cell::from(network_rx).style(styles.network_rx),
+        Cell::from(time_elapsed).style(styles.created),
     ]);
 
     Row::new(cells)

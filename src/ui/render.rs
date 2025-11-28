@@ -28,6 +28,9 @@ pub struct UiStyles {
     pub title_count: Style,
     pub title_help: Style,
     pub container_id: Style,
+    pub created: Style,
+    pub network_tx: Style,
+    pub network_rx: Style,
     pub icons: Icons,
 }
 
@@ -56,6 +59,12 @@ impl Default for UiStyles {
             title_help: Style::default().fg(Color::Rgb(80, 80, 80)),
             // Dark gray for container IDs
             container_id: Style::default().fg(Color::Rgb(100, 100, 100)),
+            // Dark gray for created timestamp
+            created: Style::default().fg(Color::Rgb(100, 100, 100)),
+            // Pink/magenta for network TX (upload)
+            network_tx: Style::default().fg(Color::Rgb(200, 100, 180)),
+            // Cyan/blue for network RX (download)
+            network_rx: Style::default().fg(Color::Rgb(100, 180, 220)),
             icons: Icons::default(),
         }
     }
