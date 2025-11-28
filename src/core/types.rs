@@ -105,8 +105,6 @@ pub struct ContainerStats {
     pub cpu_history: VecDeque<f64>,
     /// Historical memory usage values for sparkline display
     pub memory_history: VecDeque<f64>,
-    /// Total number of samples received (for marching tick markers)
-    pub sample_count: u64,
 }
 
 impl Default for ContainerStats {
@@ -120,7 +118,6 @@ impl Default for ContainerStats {
             network_rx_bytes_per_sec: 0.0,
             cpu_history: VecDeque::with_capacity(HISTORY_BUFFER_SIZE),
             memory_history: VecDeque::with_capacity(HISTORY_BUFFER_SIZE),
-            sample_count: 0,
         }
     }
 }

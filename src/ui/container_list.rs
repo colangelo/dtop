@@ -1,4 +1,5 @@
 use std::collections::VecDeque;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::core::app_state::AppState;
 use crate::core::types::{Container, ContainerState, HealthStatus, SortField, SortState};
@@ -49,12 +50,20 @@ pub fn render_container_list(
     // Determine if we should show progress bars based on terminal width
     let show_progress_bars = width >= 128;
 
+    // Get global tick counter from wall clock time (half-seconds since epoch)
+    // Dividing by 2 makes ticks advance every 2 seconds for smoother animation
+    // This ensures all containers have synchronized tick markers
+    let global_tick = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs() / 2)
+        .unwrap_or(0);
+
     // Use pre-sorted list instead of sorting every frame
     let rows: Vec<Row> = app_state
         .sorted_container_keys
         .iter()
         .filter_map(|key| app_state.containers.get(key))
-        .map(|c| create_container_row(c, styles, show_host_column, show_progress_bars))
+        .map(|c| create_container_row(c, styles, show_host_column, show_progress_bars, global_tick))
         .collect();
 
     let header = create_header_row(styles, show_host_column, app_state.sort_state);
@@ -76,6 +85,7 @@ fn create_container_row<'a>(
     styles: &UiStyles,
     show_host_column: bool,
     show_progress_bars: bool,
+    global_tick: u64,
 ) -> Row<'a> {
     // Check if container is running
     let is_running = container.state == ContainerState::Running;
@@ -87,7 +97,7 @@ fn create_container_row<'a>(
                 &container.stats.cpu_history,
                 container.stats.cpu,
                 20,
-                container.stats.sample_count,
+                global_tick,
             )
         } else {
             format!("{:5.1}%", container.stats.cpu)
@@ -104,7 +114,7 @@ fn create_container_row<'a>(
                 container.stats.memory_used_bytes,
                 container.stats.memory_limit_bytes,
                 20,
-                container.stats.sample_count,
+                global_tick,
             )
         } else {
             format!("{:5.1}%", container.stats.memory)
@@ -188,8 +198,8 @@ fn create_memory_progress_bar(percentage: f64, used: u64, limit: u64, width: usi
 
 /// Creates a braille-based sparkline from historical percentage values
 /// Each character represents one sample, with height indicating the percentage
-/// Tick markers march with the data based on sample_count
-fn create_sparkline(history: &VecDeque<f64>, width: usize, sample_count: u64) -> String {
+/// Tick markers march with the data based on global_tick (wall clock time)
+fn create_sparkline(history: &VecDeque<f64>, width: usize, global_tick: u64) -> String {
     let mut sparkline = String::with_capacity(width);
     let history_len = history.len();
 
@@ -201,14 +211,13 @@ fn create_sparkline(history: &VecDeque<f64>, width: usize, sample_count: u64) ->
     }
 
     // Convert each percentage to a braille bar character
-    // Tick position is based on sample_count so ticks march with new data
+    // Tick position is based on global_tick so ticks march synchronized across all containers
     for (i, &value) in history.iter().enumerate() {
         let bar_index = percentage_to_bar_index(value);
-        // Calculate which sample number this was (oldest sample in history)
-        // history[0] was added at sample_count - history_len + 1
-        // history[i] was added at sample_count - history_len + 1 + i
-        let sample_number = sample_count.saturating_sub(history_len as u64) + i as u64;
-        if sample_number % TICK_INTERVAL as u64 == 0 {
+        // Calculate tick position based on global time and position in history
+        // As global_tick advances, tick positions shift left (newer tick enters from right)
+        let tick_position = global_tick.saturating_sub(history_len as u64) + i as u64;
+        if tick_position % TICK_INTERVAL as u64 == 0 {
             sparkline.push(BRAILLE_BARS_WITH_TICK[bar_index]);
         } else {
             sparkline.push(BRAILLE_BARS[bar_index]);
@@ -235,8 +244,8 @@ fn percentage_to_bar_index(percentage: f64) -> usize {
 }
 
 /// Creates a CPU sparkline with percentage suffix
-fn create_cpu_sparkline(history: &VecDeque<f64>, current: f64, width: usize, sample_count: u64) -> String {
-    let sparkline = create_sparkline(history, width, sample_count);
+fn create_cpu_sparkline(history: &VecDeque<f64>, current: f64, width: usize, global_tick: u64) -> String {
+    let sparkline = create_sparkline(history, width, global_tick);
     format!("{} {:5.1}%", sparkline, current)
 }
 
@@ -246,9 +255,9 @@ fn create_memory_sparkline(
     used: u64,
     limit: u64,
     width: usize,
-    sample_count: u64,
+    global_tick: u64,
 ) -> String {
-    let sparkline = create_sparkline(history, width, sample_count);
+    let sparkline = create_sparkline(history, width, global_tick);
     format!("{} {}/{}", sparkline, format_bytes(used), format_bytes(limit))
 }
 
