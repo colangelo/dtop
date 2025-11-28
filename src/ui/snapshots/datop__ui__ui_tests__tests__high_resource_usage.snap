@@ -2,10 +2,10 @@
 source: src/ui/ui_tests.rs
 expression: output
 ---
-datop vX.X.X-alpha - 3 containers                                                                     '?' help, 'q' quit
+datop vX.X.X-a - 3 containers                                                                         '?' help, 'q' quit
                                                                                                                         
-  ID             Name                                        CPU %   Memory  Net TX       Net RX       Created ▼        
+  ID             Name                                        CPU %   Memory  NetTx/s      NetRx/s      Created ▼        
                                                                                                                         
-  low12345678  ▶ low-usage                                    15.0%   20.0%  100B/s       200B/s       2 hours ago      
-  med12345678  ▶ medium-usage                                 55.0%   65.0%  1000.0KB/s   1.95MB/s     2 hours ago      
-  high12345678 ▶ high-usage                                   95.0%   99.0%  100.00MB/s   200.00MB/s   2 hours ago
+  low12345678  ▶ low-usage                                    15.0%   20.0%          100B         200B 2 hours ago      
+  med12345678  ▶ medium-usage                                 55.0%   65.0%      1000.0KB       1.95MB 2 hours ago      
+  high12345678 ▶ high-usage                                   95.0%   99.0%      100.00MB     200.00MB 2 hours ago

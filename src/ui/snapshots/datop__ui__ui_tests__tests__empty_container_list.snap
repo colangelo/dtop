@@ -2,6 +2,6 @@
 source: src/ui/ui_tests.rs
 expression: output
 ---
-datop vX.X.X-alpha - 0 containers                                                 '?' help, 'q' quit
+datop vX.X.X-a - 0 containers                                                     '?' help, 'q' quit
                                                                                                     
-  ID             Name                    CPU %   Memory  Net TX       Net RX       Created ▼
+  ID             Name                    CPU %   Memory  NetTx/s      NetRx/s      Created ▼

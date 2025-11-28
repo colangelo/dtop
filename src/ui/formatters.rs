@@ -33,9 +33,10 @@ pub fn format_bytes(bytes: u64) -> String {
     format_byte_value(bytes as f64, "", false, (0, 0, 0, 0))
 }
 
-/// Formats bytes per second into a human-readable string (KB/s, MB/s, GB/s)
+/// Formats bytes per second into a human-readable string (KB, MB, GB)
+/// Note: "/s" is not included - it's shown in the column header instead
 pub fn format_bytes_per_sec(bytes_per_sec: f64) -> String {
-    format_byte_value(bytes_per_sec, "/s", true, (2, 2, 1, 0))
+    format_byte_value(bytes_per_sec, "", true, (2, 2, 1, 0))
 }
 
 /// Formats the time elapsed since container creation
@@ -90,10 +91,10 @@ mod tests {
 
     #[test]
     fn test_format_bytes_per_sec() {
-        assert_eq!(format_bytes_per_sec(0.0), "0B/s");
-        assert_eq!(format_bytes_per_sec(512.0), "512B/s");
-        assert_eq!(format_bytes_per_sec(1024.0), "1.0KB/s");
-        assert_eq!(format_bytes_per_sec(1048576.0), "1.00MB/s");
-        assert_eq!(format_bytes_per_sec(1073741824.0), "1.00GB/s");
+        assert_eq!(format_bytes_per_sec(0.0), "0B");
+        assert_eq!(format_bytes_per_sec(512.0), "512B");
+        assert_eq!(format_bytes_per_sec(1024.0), "1.0KB");
+        assert_eq!(format_bytes_per_sec(1048576.0), "1.00MB");
+        assert_eq!(format_bytes_per_sec(1073741824.0), "1.00GB");
     }
 }

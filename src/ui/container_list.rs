@@ -163,8 +163,8 @@ fn create_container_row<'a>(
     cells.extend(vec![
         Cell::from(cpu_bar).style(cpu_style),
         Cell::from(memory_bar).style(memory_style),
-        Cell::from(network_tx).style(styles.network_tx),
-        Cell::from(network_rx).style(styles.network_rx),
+        Cell::from(Line::styled(network_tx, styles.network_tx).right_aligned()),
+        Cell::from(Line::styled(network_rx, styles.network_rx).right_aligned()),
         Cell::from(time_elapsed).style(styles.created),
     ]);
 
@@ -339,8 +339,8 @@ fn create_header_row(
         } else {
             "Memory %".to_string()
         },
-        "Net TX".to_string(),
-        "Net RX".to_string(),
+        "NetTx/s".to_string(),
+        "NetRx/s".to_string(),
         if sort_field == SortField::Uptime {
             format!("Created {}", sort_symbol)
         } else {
