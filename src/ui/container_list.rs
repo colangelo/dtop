@@ -9,6 +9,7 @@ use ratatui::{
     Frame,
     layout::Constraint,
     style::{Color, Style},
+    text::{Line, Span},
     widgets::{Block, Borders, Cell, Row, Table},
 };
 
@@ -390,16 +391,27 @@ fn create_table<'a>(
         Constraint::Length(15),        // Created
     ]);
 
+    // Build styled title: "datop vX.X.X" in gray, "N containers" in yellow
+    let title_left = Line::from(vec![
+        Span::styled(format!("datop v{}", VERSION), styles.title_name),
+        Span::styled(" - ", styles.title_name),
+        Span::styled(format!("{} containers", container_count), styles.title_count),
+    ]);
+
+    // Help text right-aligned in dark gray
+    let title_right = Line::from(vec![
+        Span::styled("'?' help, 'q' quit", styles.title_help),
+    ])
+    .right_aligned();
+
     Table::new(rows, constraints)
         .header(header)
         .block(
             Block::default()
                 .borders(Borders::NONE)
                 .padding(ratatui::widgets::Padding::proportional(1))
-                .title(format!(
-                    "dtop v{} - {} containers ('?' for help, 'q' to quit)",
-                    VERSION, container_count
-                ))
+                .title_top(title_left)
+                .title_top(title_right)
                 .style(styles.border),
         )
         .row_highlight_style(styles.selected)

@@ -24,6 +24,9 @@ pub struct UiStyles {
     pub border: Style,
     pub selected: Style,
     pub search_bar: Style,
+    pub title_name: Style,
+    pub title_count: Style,
+    pub title_help: Style,
     pub icons: Icons,
 }
 
@@ -33,8 +36,9 @@ impl Default for UiStyles {
             high: Style::default().fg(Color::Red),
             medium: Style::default().fg(Color::Yellow),
             low: Style::default().fg(Color::Green),
+            // Dark purple for column headers
             header: Style::default()
-                .fg(Color::Cyan)
+                .fg(Color::Rgb(140, 100, 180))
                 .add_modifier(Modifier::BOLD),
             border: Style::default().fg(Color::White),
             selected: Style::default()
@@ -43,6 +47,12 @@ impl Default for UiStyles {
             search_bar: Style::default()
                 .fg(Color::Yellow)
                 .add_modifier(Modifier::BOLD),
+            // Gray for app name/version
+            title_name: Style::default().fg(Color::Rgb(128, 128, 128)),
+            // Yellow for container count
+            title_count: Style::default().fg(Color::Yellow),
+            // Dark gray for help text
+            title_help: Style::default().fg(Color::Rgb(80, 80, 80)),
             icons: Icons::default(),
         }
     }
