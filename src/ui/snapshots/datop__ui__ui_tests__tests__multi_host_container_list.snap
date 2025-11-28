@@ -6,6 +6,6 @@ datop vX.X.X-a - 3 containers                                                   
                                                                                                                                                       
   ID           Name     Host                 CPU %                          Memory %                       NetTx/s      NetRx/s      Created ▼        
                                                                                                                                                       
-  abc1234567 ▶ nginx    local                │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│  25.5%  │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│ 431 M/9      1.0  KB      2.0  KB 2 hours ago      
-  def9876543 ▶ postgres user@server1         │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│  65.8%  │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│ 747 M/9      5.0  KB     10.0  KB 2 hours ago      
-  ghi1112223 ▶ redis    192.168.1.100:2375   │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│  15.2%  │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│ 291 M/9       512  B      1.0  KB 2 hours ago
+  abc1234567 ▶ nginx    local                │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│  25.5%  │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│ 431 M/9      1.0· KB      2.0· KB 2 hours ago      
+  def9876543 ▶ postgres user@server1         │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│  65.8%  │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│ 747 M/9      5.0· KB     10.0· KB 2 hours ago      
+  ghi1112223 ▶ redis    192.168.1.100:2375   │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│  15.2%  │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│ 291 M/9       512· B      1.0· KB 2 hours ago
