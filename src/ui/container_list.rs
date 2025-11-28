@@ -425,21 +425,21 @@ mod tests {
     #[test]
     fn test_create_memory_progress_bar_format() {
         let bar = create_memory_progress_bar(50.0, 512 * 1024 * 1024, 1024 * 1024 * 1024, 20);
-        assert!(bar.contains("512M/1G"));
+        assert!(bar.contains("512 M/1 G"));
         assert!(bar.contains("██████████")); // 50% filled = 10 blocks
     }
 
     #[test]
     fn test_create_memory_progress_bar_zero() {
         let bar = create_memory_progress_bar(0.0, 0, 1024 * 1024 * 1024, 20);
-        assert!(bar.contains("0B/1G"));
+        assert!(bar.contains("0 B/1 G"));
         assert!(bar.starts_with("░░░░░░░░░░░░░░░░░░░░")); // All empty
     }
 
     #[test]
     fn test_create_memory_progress_bar_full() {
         let bar = create_memory_progress_bar(100.0, 1024 * 1024 * 1024, 1024 * 1024 * 1024, 20);
-        assert!(bar.contains("1G/1G"));
+        assert!(bar.contains("1 G/1 G"));
         assert!(bar.starts_with("████████████████████")); // All filled
     }
 
@@ -564,7 +564,7 @@ mod tests {
         history.push_back(50.0);
 
         let result = create_memory_sparkline(&history, 512 * 1024 * 1024, 1024 * 1024 * 1024, 5, 1);
-        assert!(result.contains("512M/1G"));
+        assert!(result.contains("512 M/1 G"));
     }
 
     #[test]

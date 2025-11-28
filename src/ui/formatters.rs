@@ -18,13 +18,13 @@ fn format_byte_value(
     let b = if include_b { "B" } else { "" };
 
     if value >= GB {
-        format!("{:.prec$}G{}{}", value / GB, b, suffix, prec = gb_prec)
+        format!("{:.prec$} G{}{}", value / GB, b, suffix, prec = gb_prec)
     } else if value >= MB {
-        format!("{:.prec$}M{}{}", value / MB, b, suffix, prec = mb_prec)
+        format!("{:.prec$} M{}{}", value / MB, b, suffix, prec = mb_prec)
     } else if value >= KB {
-        format!("{:.prec$}K{}{}", value / KB, b, suffix, prec = kb_prec)
+        format!("{:.prec$} K{}{}", value / KB, b, suffix, prec = kb_prec)
     } else {
-        format!("{:.prec$}B{}", value, suffix, prec = b_prec)
+        format!("{:.prec$} B{}", value, suffix, prec = b_prec)
     }
 }
 
@@ -57,44 +57,44 @@ mod tests {
 
     #[test]
     fn test_format_bytes_zero() {
-        assert_eq!(format_bytes(0), "0B");
+        assert_eq!(format_bytes(0), "0 B");
     }
 
     #[test]
     fn test_format_bytes_bytes() {
-        assert_eq!(format_bytes(1), "1B");
-        assert_eq!(format_bytes(512), "512B");
-        assert_eq!(format_bytes(1023), "1023B");
+        assert_eq!(format_bytes(1), "1 B");
+        assert_eq!(format_bytes(512), "512 B");
+        assert_eq!(format_bytes(1023), "1023 B");
     }
 
     #[test]
     fn test_format_bytes_kilobytes() {
-        assert_eq!(format_bytes(1024), "1K");
-        assert_eq!(format_bytes(1536), "2K"); // 1.5KB rounds to 2K
-        assert_eq!(format_bytes(10240), "10K");
-        assert_eq!(format_bytes(1048575), "1024K"); // Just under 1MB
+        assert_eq!(format_bytes(1024), "1 K");
+        assert_eq!(format_bytes(1536), "2 K"); // 1.5KB rounds to 2K
+        assert_eq!(format_bytes(10240), "10 K");
+        assert_eq!(format_bytes(1048575), "1024 K"); // Just under 1MB
     }
 
     #[test]
     fn test_format_bytes_megabytes() {
-        assert_eq!(format_bytes(1048576), "1M"); // Exactly 1MB
-        assert_eq!(format_bytes(536870912), "512M");
-        assert_eq!(format_bytes(1073741823), "1024M"); // Just under 1GB
+        assert_eq!(format_bytes(1048576), "1 M"); // Exactly 1MB
+        assert_eq!(format_bytes(536870912), "512 M");
+        assert_eq!(format_bytes(1073741823), "1024 M"); // Just under 1GB
     }
 
     #[test]
     fn test_format_bytes_gigabytes() {
-        assert_eq!(format_bytes(1073741824), "1G"); // Exactly 1GB
-        assert_eq!(format_bytes(4294967296), "4G"); // 4GB
-        assert_eq!(format_bytes(17179869184), "16G"); // 16GB
+        assert_eq!(format_bytes(1073741824), "1 G"); // Exactly 1GB
+        assert_eq!(format_bytes(4294967296), "4 G"); // 4GB
+        assert_eq!(format_bytes(17179869184), "16 G"); // 16GB
     }
 
     #[test]
     fn test_format_bytes_per_sec() {
-        assert_eq!(format_bytes_per_sec(0.0), "0B");
-        assert_eq!(format_bytes_per_sec(512.0), "512B");
-        assert_eq!(format_bytes_per_sec(1024.0), "1.0KB");
-        assert_eq!(format_bytes_per_sec(1048576.0), "1.00MB");
-        assert_eq!(format_bytes_per_sec(1073741824.0), "1.00GB");
+        assert_eq!(format_bytes_per_sec(0.0), "0 B");
+        assert_eq!(format_bytes_per_sec(512.0), "512 B");
+        assert_eq!(format_bytes_per_sec(1024.0), "1.0 KB");
+        assert_eq!(format_bytes_per_sec(1048576.0), "1.00 MB");
+        assert_eq!(format_bytes_per_sec(1073741824.0), "1.00 GB");
     }
 }
