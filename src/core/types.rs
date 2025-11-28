@@ -1,8 +1,12 @@
 use chrono::{DateTime, Utc};
+use std::collections::VecDeque;
 use std::str::FromStr;
 use tokio::sync::mpsc;
 
 use crate::docker::logs::LogEntry;
+
+/// Maximum number of samples to keep in history buffers for sparkline display
+pub const HISTORY_BUFFER_SIZE: usize = 20;
 
 /// Host identifier for tracking which Docker host a container belongs to
 pub type HostId = String;
@@ -85,7 +89,7 @@ pub struct Container {
 }
 
 /// Container runtime statistics (updated frequently)
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct ContainerStats {
     pub cpu: f64,
     pub memory: f64,
@@ -97,6 +101,25 @@ pub struct ContainerStats {
     pub network_tx_bytes_per_sec: f64,
     /// Network receive rate in bytes per second
     pub network_rx_bytes_per_sec: f64,
+    /// Historical CPU usage values for sparkline display
+    pub cpu_history: VecDeque<f64>,
+    /// Historical memory usage values for sparkline display
+    pub memory_history: VecDeque<f64>,
+}
+
+impl Default for ContainerStats {
+    fn default() -> Self {
+        Self {
+            cpu: 0.0,
+            memory: 0.0,
+            memory_used_bytes: 0,
+            memory_limit_bytes: 0,
+            network_tx_bytes_per_sec: 0.0,
+            network_rx_bytes_per_sec: 0.0,
+            cpu_history: VecDeque::with_capacity(HISTORY_BUFFER_SIZE),
+            memory_history: VecDeque::with_capacity(HISTORY_BUFFER_SIZE),
+        }
+    }
 }
 
 /// Unique key for identifying containers across multiple hosts

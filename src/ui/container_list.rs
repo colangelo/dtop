@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use crate::core::app_state::AppState;
 use crate::core::types::{Container, ContainerState, HealthStatus, SortField, SortState};
 use crate::ui::formatters::{format_bytes, format_bytes_per_sec, format_time_elapsed};
@@ -8,6 +10,16 @@ use ratatui::{
     style::{Color, Style},
     widgets::{Block, Borders, Cell, Row, Table},
 };
+
+/// Braille characters for sparkline vertical bars (0-4 rows filled)
+/// Using bottom-aligned braille patterns for vertical bar effect
+const BRAILLE_BARS: [char; 5] = [
+    '⠀', // 0: empty (U+2800)
+    '⣀', // 1: bottom row (U+28C0)
+    '⣤', // 2: bottom two rows (U+28E4)
+    '⣶', // 3: bottom three rows (U+28F6)
+    '⣿', // 4: all rows filled (U+28FF)
+];
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -58,7 +70,7 @@ fn create_container_row<'a>(
     // Only show stats for running containers
     let (cpu_bar, cpu_style) = if is_running {
         let display = if show_progress_bars {
-            create_progress_bar(container.stats.cpu, 20)
+            create_cpu_sparkline(&container.stats.cpu_history, container.stats.cpu, 20)
         } else {
             format!("{:5.1}%", container.stats.cpu)
         };
@@ -69,8 +81,8 @@ fn create_container_row<'a>(
 
     let (memory_bar, memory_style) = if is_running {
         let display = if show_progress_bars {
-            create_memory_progress_bar(
-                container.stats.memory,
+            create_memory_sparkline(
+                &container.stats.memory_history,
                 container.stats.memory_used_bytes,
                 container.stats.memory_limit_bytes,
                 20,
@@ -129,7 +141,8 @@ fn create_container_row<'a>(
     Row::new(cells)
 }
 
-/// Creates a text-based progress bar with percentage
+/// Creates a text-based progress bar with percentage (legacy, kept for tests)
+#[cfg(test)]
 fn create_progress_bar(percentage: f64, width: usize) -> String {
     // Clamp the bar visual to 100%, but display the actual percentage value
     let bar_percentage = percentage.clamp(0.0, 100.0);
@@ -141,7 +154,8 @@ fn create_progress_bar(percentage: f64, width: usize) -> String {
     format!("{} {:5.1}%", bar, percentage)
 }
 
-/// Creates a text-based progress bar with memory used/limit display
+/// Creates a text-based progress bar with memory used/limit display (legacy, kept for tests)
+#[cfg(test)]
 fn create_memory_progress_bar(percentage: f64, used: u64, limit: u64, width: usize) -> String {
     // Clamp the bar visual to 100%, but display the actual percentage value
     let bar_percentage = percentage.clamp(0.0, 100.0);
@@ -151,6 +165,59 @@ fn create_memory_progress_bar(percentage: f64, used: u64, limit: u64, width: usi
     let bar = format!("{}{}", "█".repeat(filled_width), "░".repeat(empty_width));
 
     format!("{} {}/{}", bar, format_bytes(used), format_bytes(limit))
+}
+
+/// Creates a braille-based sparkline from historical percentage values
+/// Each character represents one sample, with height indicating the percentage
+fn create_sparkline(history: &VecDeque<f64>, width: usize) -> String {
+    let mut sparkline = String::with_capacity(width);
+
+    // Pad with empty chars if history is shorter than width
+    let padding = width.saturating_sub(history.len());
+    for _ in 0..padding {
+        sparkline.push(BRAILLE_BARS[0]);
+    }
+
+    // Convert each percentage to a braille bar character
+    for &value in history.iter() {
+        let bar_index = percentage_to_bar_index(value);
+        sparkline.push(BRAILLE_BARS[bar_index]);
+    }
+
+    sparkline
+}
+
+/// Maps a percentage (0-100) to a braille bar index (0-4)
+fn percentage_to_bar_index(percentage: f64) -> usize {
+    let clamped = percentage.clamp(0.0, 100.0);
+    if clamped < 12.5 {
+        0 // empty
+    } else if clamped < 25.0 {
+        1 // 1 row
+    } else if clamped < 50.0 {
+        2 // 2 rows
+    } else if clamped < 75.0 {
+        3 // 3 rows
+    } else {
+        4 // full
+    }
+}
+
+/// Creates a CPU sparkline with percentage suffix
+fn create_cpu_sparkline(history: &VecDeque<f64>, current: f64, width: usize) -> String {
+    let sparkline = create_sparkline(history, width);
+    format!("{} {:5.1}%", sparkline, current)
+}
+
+/// Creates a memory sparkline with used/limit suffix
+fn create_memory_sparkline(
+    history: &VecDeque<f64>,
+    used: u64,
+    limit: u64,
+    width: usize,
+) -> String {
+    let sparkline = create_sparkline(history, width);
+    format!("{} {}/{}", sparkline, format_bytes(used), format_bytes(limit))
 }
 
 /// Returns the status icon and color based on container health (if available) or state
@@ -327,6 +394,94 @@ mod tests {
         // Bar visual should clamp at 100% even if percentage > 100
         let bar = create_memory_progress_bar(150.0, 1536 * 1024 * 1024, 1024 * 1024 * 1024, 20);
         assert!(bar.starts_with("████████████████████")); // Still fully filled
+    }
+
+    #[test]
+    fn test_percentage_to_bar_index() {
+        // Test boundary values for braille bar mapping
+        assert_eq!(percentage_to_bar_index(0.0), 0, "0% should be empty");
+        assert_eq!(percentage_to_bar_index(12.4), 0, "12.4% should be empty");
+        assert_eq!(percentage_to_bar_index(12.5), 1, "12.5% should be 1 row");
+        assert_eq!(percentage_to_bar_index(24.9), 1, "24.9% should be 1 row");
+        assert_eq!(percentage_to_bar_index(25.0), 2, "25% should be 2 rows");
+        assert_eq!(percentage_to_bar_index(49.9), 2, "49.9% should be 2 rows");
+        assert_eq!(percentage_to_bar_index(50.0), 3, "50% should be 3 rows");
+        assert_eq!(percentage_to_bar_index(74.9), 3, "74.9% should be 3 rows");
+        assert_eq!(percentage_to_bar_index(75.0), 4, "75% should be full");
+        assert_eq!(percentage_to_bar_index(100.0), 4, "100% should be full");
+    }
+
+    #[test]
+    fn test_percentage_to_bar_index_clamps() {
+        // Values outside 0-100 should be clamped
+        assert_eq!(percentage_to_bar_index(-10.0), 0, "negative should clamp to 0");
+        assert_eq!(percentage_to_bar_index(150.0), 4, "over 100 should clamp to full");
+    }
+
+    #[test]
+    fn test_create_sparkline_empty_history() {
+        let history = VecDeque::new();
+        let sparkline = create_sparkline(&history, 10);
+        assert_eq!(sparkline.chars().count(), 10);
+        // All should be empty braille chars
+        assert!(sparkline.chars().all(|c| c == BRAILLE_BARS[0]));
+    }
+
+    #[test]
+    fn test_create_sparkline_partial_history() {
+        let mut history = VecDeque::new();
+        history.push_back(80.0); // full bar
+        history.push_back(30.0); // 2 rows
+
+        let sparkline = create_sparkline(&history, 5);
+        let chars: Vec<char> = sparkline.chars().collect();
+
+        assert_eq!(chars.len(), 5);
+        // First 3 should be padding (empty)
+        assert_eq!(chars[0], BRAILLE_BARS[0]);
+        assert_eq!(chars[1], BRAILLE_BARS[0]);
+        assert_eq!(chars[2], BRAILLE_BARS[0]);
+        // Last 2 should be from history
+        assert_eq!(chars[3], BRAILLE_BARS[4]); // 80% = full
+        assert_eq!(chars[4], BRAILLE_BARS[2]); // 30% = 2 rows
+    }
+
+    #[test]
+    fn test_create_sparkline_full_history() {
+        let mut history = VecDeque::new();
+        for i in 0..5 {
+            history.push_back(i as f64 * 25.0); // 0, 25, 50, 75, 100
+        }
+
+        let sparkline = create_sparkline(&history, 5);
+        let chars: Vec<char> = sparkline.chars().collect();
+
+        assert_eq!(chars.len(), 5);
+        assert_eq!(chars[0], BRAILLE_BARS[0]); // 0%
+        assert_eq!(chars[1], BRAILLE_BARS[2]); // 25%
+        assert_eq!(chars[2], BRAILLE_BARS[3]); // 50%
+        assert_eq!(chars[3], BRAILLE_BARS[4]); // 75%
+        assert_eq!(chars[4], BRAILLE_BARS[4]); // 100%
+    }
+
+    #[test]
+    fn test_create_cpu_sparkline_format() {
+        let mut history = VecDeque::new();
+        history.push_back(50.0);
+        history.push_back(75.0);
+
+        let result = create_cpu_sparkline(&history, 42.5, 5);
+        assert!(result.contains("42.5%"));
+        assert_eq!(result.chars().filter(|c| *c == '%').count(), 1);
+    }
+
+    #[test]
+    fn test_create_memory_sparkline_format() {
+        let mut history = VecDeque::new();
+        history.push_back(50.0);
+
+        let result = create_memory_sparkline(&history, 512 * 1024 * 1024, 1024 * 1024 * 1024, 5);
+        assert!(result.contains("512M/1G"));
     }
 
     #[test]

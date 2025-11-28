@@ -88,6 +88,7 @@ pub async fn stream_container_stats(host: DockerHost, truncated_id: String, tx: 
                     memory_limit_bytes,
                     network_tx_bytes_per_sec,
                     network_rx_bytes_per_sec,
+                    ..Default::default()
                 };
 
                 let key = ContainerKey::new(host.host_id.clone(), truncated_id.clone());

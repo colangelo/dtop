@@ -72,6 +72,7 @@ mod tests {
                 memory_limit_bytes: 1_000_000_000,                 // 1GB limit
                 network_tx_bytes_per_sec: net_tx,
                 network_rx_bytes_per_sec: net_rx,
+                ..Default::default()
             },
             host_id: host_id.to_string(),
             dozzle_url: None,
@@ -509,10 +510,12 @@ mod tests {
         let buffer = terminal.backend().buffer().clone();
         let output = buffer_to_string(&buffer);
 
-        // Verify that progress bars are present (containing █ or ░ characters)
+        // Verify that sparklines are present (containing braille characters)
+        // Using braille patterns: ⠀ (empty), ⣀, ⣤, ⣶, ⣿ (full)
         assert!(
-            output.contains('█') || output.contains('░'),
-            "Wide terminal (150 chars) should display progress bars"
+            output.contains('⠀') || output.contains('⣀') || output.contains('⣤')
+                || output.contains('⣶') || output.contains('⣿'),
+            "Wide terminal (150 chars) should display sparkline graphs"
         );
 
         assert_snapshot_with_redaction!(output);

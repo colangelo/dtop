@@ -1,6 +1,7 @@
 use crate::core::app_state::AppState;
 use crate::core::types::{
     Container, ContainerKey, ContainerState, ContainerStats, HealthStatus, RenderAction,
+    HISTORY_BUFFER_SIZE,
 };
 
 impl AppState {
@@ -74,9 +75,29 @@ impl AppState {
     pub(super) fn handle_container_stat(
         &mut self,
         key: ContainerKey,
-        stats: ContainerStats,
+        mut stats: ContainerStats,
     ) -> RenderAction {
         if let Some(container) = self.containers.get_mut(&key) {
+            // Preserve existing history and append new values
+            let mut cpu_history = std::mem::take(&mut container.stats.cpu_history);
+            let mut memory_history = std::mem::take(&mut container.stats.memory_history);
+
+            // Add new values to history
+            cpu_history.push_back(stats.cpu);
+            memory_history.push_back(stats.memory);
+
+            // Cap history at max size
+            while cpu_history.len() > HISTORY_BUFFER_SIZE {
+                cpu_history.pop_front();
+            }
+            while memory_history.len() > HISTORY_BUFFER_SIZE {
+                memory_history.pop_front();
+            }
+
+            // Assign history to the new stats
+            stats.cpu_history = cpu_history;
+            stats.memory_history = memory_history;
+
             container.stats = stats;
         }
         RenderAction::None // No force draw - just stats update
