@@ -3,9 +3,8 @@ source: src/ui/ui_tests.rs
 expression: output
 ---
 datop vX.X.X-a - 3 containers                                                                                                       '?' help, 'q' quit
+ID             Name     Host                 CPU %                          Memory %                         NetTx/s      NetRx/s      Created ▼      
                                                                                                                                                       
-  ID           Name     Host                 CPU %                          Memory %                       NetTx/s      NetRx/s      Created ▼        
-                                                                                                                                                      
-  abc1234567 ▶ nginx    local                │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│  25.5%  │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│ 431 M/9      1.0· KB      2.0· KB 2 hours ago      
-  def9876543 ▶ postgres user@server1         │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│  65.8%  │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│ 747 M/9      5.0· KB     10.0· KB 2 hours ago      
-  ghi1112223 ▶ redis    192.168.1.100:2375   │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│  15.2%  │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│ 291 M/9       512· B      1.0· KB 2 hours ago
+abc123456789 ▶ nginx    local                │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│  25.5%  │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│ 431 M/954      1.0· KB      2.0· KB 2 hours ago    
+def987654321 ▶ postgres user@server1         │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│  65.8%  │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│ 747 M/954      5.0· KB     10.0· KB 2 hours ago    
+ghi111222333 ▶ redis    192.168.1.100:2375   │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│  15.2%  │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│ 291 M/954       512· B      1.0· KB 2 hours ago

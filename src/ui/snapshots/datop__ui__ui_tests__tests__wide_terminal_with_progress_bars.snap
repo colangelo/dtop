@@ -3,7 +3,6 @@ source: src/ui/ui_tests.rs
 expression: output
 ---
 datop vX.X.X-a - 1 containers                                                                                                       '?' help, 'q' quit
+ID             Name                       CPU %                          Memory %                            NetTx/s      NetRx/s      Created ▼      
                                                                                                                                                       
-  ID             Name                   CPU %                          Memory %                            NetTx/s      NetRx/s      Created ▼        
-                                                                                                                                                      
-  abc123456789 ▶ nginx                  │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│  45.5%  │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│ 594 M/954 M       1.0· KB      2.0· KB 2 hours ago
+abc123456789 ▶ nginx                      │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│  45.5%  │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│ 594 M/954 M       1.0· KB      2.0· KB 2 hours ago
