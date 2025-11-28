@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - **Marching tick markers**: Add synchronized tick markers every 5 positions that march from right to left with the data flow
   - Empty positions show dot (⡀), filled positions show "hole" pattern (⢀⢤⢶⢿)
   - Ticks advance every 2 seconds, synchronized across all containers using wall clock time
+- **Sparkline borders**: Box drawing characters (`│`) frame the sparkline graphs for visual clarity
 
 ### UI Redesign
 
