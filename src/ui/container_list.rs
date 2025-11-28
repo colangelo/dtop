@@ -21,14 +21,14 @@ const BRAILLE_BARS: [char; 5] = [
     '⣿', // 4: all rows filled (U+28FF)
 ];
 
-/// Braille characters with tick marker (dot 1 at top-left) added
-/// For filled bars, shows a small top dot to indicate tick position
+/// Braille characters with tick marker - dot 7 (bottom-left) removed to create a "hole"
+/// For filled bars, the missing dot makes the tick position visible
 const BRAILLE_BARS_WITH_TICK: [char; 5] = [
-    '⡀', // 0: empty + bottom tick (U+2840) - bottom dot for visibility
-    '⣁', // 1: bottom row + top tick (U+28C1)
-    '⣥', // 2: bottom two rows + top tick (U+28E5)
-    '⣷', // 3: bottom three rows + top tick (U+28F7)
-    '⣿', // 4: all rows (U+28FF) - already has all dots
+    '⡀', // 0: empty + bottom tick (U+2840) - shows dot for visibility
+    '⢀', // 1: bottom row minus dot 7 (U+2880) - hole in left
+    '⢤', // 2: bottom two rows minus dot 7 (U+28A4) - hole in left
+    '⢶', // 3: bottom three rows minus dot 7 (U+28B6) - hole in left
+    '⢿', // 4: all rows minus dot 7 (U+28BF) - hole in left
 ];
 
 /// Interval for tick markers (every N positions)
@@ -495,7 +495,7 @@ mod tests {
     #[test]
     fn test_create_sparkline_tick_on_filled_bar() {
         let mut history = VecDeque::new();
-        // Fill with 50% values (3 rows)
+        // Fill with 60% values (3 rows)
         for _ in 0..10 {
             history.push_back(60.0);
         }
@@ -503,12 +503,14 @@ mod tests {
         let sparkline = create_sparkline(&history, 10);
         let chars: Vec<char> = sparkline.chars().collect();
 
-        // Position 0 and 5 should have tick-marked bars
-        assert_eq!(chars[0], BRAILLE_BARS_WITH_TICK[3]); // 60% with tick
-        assert_eq!(chars[5], BRAILLE_BARS_WITH_TICK[3]); // 60% with tick
+        // Position 0 and 5 should have tick-marked bars (with hole)
+        assert_eq!(chars[0], BRAILLE_BARS_WITH_TICK[3]); // 60% with hole = ⢶
+        assert_eq!(chars[5], BRAILLE_BARS_WITH_TICK[3]); // 60% with hole = ⢶
         // Other positions should be regular bars
-        assert_eq!(chars[1], BRAILLE_BARS[3]); // 60% no tick
-        assert_eq!(chars[2], BRAILLE_BARS[3]); // 60% no tick
+        assert_eq!(chars[1], BRAILLE_BARS[3]); // 60% full = ⣶
+        assert_eq!(chars[2], BRAILLE_BARS[3]); // 60% full = ⣶
+        // Verify the hole character is different from the full bar
+        assert_ne!(chars[0], chars[1]); // tick position differs from non-tick
     }
 
     #[test]
