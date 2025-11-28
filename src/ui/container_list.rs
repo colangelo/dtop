@@ -357,7 +357,7 @@ fn create_header_row(
         },
     ]);
 
-    Row::new(headers).style(styles.header).bottom_margin(1)
+    Row::new(headers).style(styles.header)
 }
 
 /// Creates the complete table widget
@@ -419,6 +419,7 @@ fn create_table<'a>(
         .block(
             Block::default()
                 .borders(Borders::NONE)
+                .padding(ratatui::widgets::Padding::proportional(1))
                 .title_top(title_left)
                 .title_top(title_right)
                 .style(styles.border),

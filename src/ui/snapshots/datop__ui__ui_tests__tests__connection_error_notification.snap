@@ -3,6 +3,6 @@ source: src/ui/ui_tests.rs
 expression: output
 ---
 datop vX.X.X-a - 1 containers                                                    ┌─────────────────────────────────────────────────────────┐
-ID             Name             CPU %                          Memory %          │✗ user@server1: Failed to connect: Connection refused    │
-                                                                                 └─────────────────────────────────────────────────────────┘
-abc123456789 ▶ nginx            │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│  25.5%  │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│ 431 M/954 M       1.0· KB      2.0· KB 2 hours ago
+                                                                                 │✗ user@server1: Failed to connect: Connection refused    │
+  ID             Name         CPU %                          Memory %            └─────────────────────────────────────────────────────────┘
+  abc123456789 ▶ nginx        │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│  25.5%  │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│ 431 M/954 M       1.0· KB      2.0· KB 2 hours ago
