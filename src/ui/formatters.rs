@@ -13,30 +13,33 @@ fn format_byte_value(
     suffix: &str,
     include_b: bool,
     precisions: (usize, usize, usize, usize),
+    spacing: usize,
 ) -> String {
     let (gb_prec, mb_prec, kb_prec, b_prec) = precisions;
     let b = if include_b { "B" } else { "" };
+    let sp = " ".repeat(spacing);
 
     if value >= GB {
-        format!("{:.prec$} G{}{}", value / GB, b, suffix, prec = gb_prec)
+        format!("{:.prec$}{sp}G{}{}", value / GB, b, suffix, prec = gb_prec)
     } else if value >= MB {
-        format!("{:.prec$} M{}{}", value / MB, b, suffix, prec = mb_prec)
+        format!("{:.prec$}{sp}M{}{}", value / MB, b, suffix, prec = mb_prec)
     } else if value >= KB {
-        format!("{:.prec$} K{}{}", value / KB, b, suffix, prec = kb_prec)
+        format!("{:.prec$}{sp}K{}{}", value / KB, b, suffix, prec = kb_prec)
     } else {
-        format!("{:.prec$} B{}", value, suffix, prec = b_prec)
+        format!("{:.prec$}{sp}B{}", value, suffix, prec = b_prec)
     }
 }
 
 /// Formats bytes into a human-readable string (B, K, M, G)
 pub fn format_bytes(bytes: u64) -> String {
-    format_byte_value(bytes as f64, "", false, (0, 0, 0, 0))
+    format_byte_value(bytes as f64, "", false, (0, 0, 0, 0), 1)
 }
 
 /// Formats bytes per second into a human-readable string (KB, MB, GB)
 /// Note: "/s" is not included - it's shown in the column header instead
+/// Uses 2-space padding for better alignment when units change
 pub fn format_bytes_per_sec(bytes_per_sec: f64) -> String {
-    format_byte_value(bytes_per_sec, "", true, (2, 2, 1, 0))
+    format_byte_value(bytes_per_sec, "", true, (2, 2, 1, 0), 2)
 }
 
 /// Formats the time elapsed since container creation
@@ -91,10 +94,10 @@ mod tests {
 
     #[test]
     fn test_format_bytes_per_sec() {
-        assert_eq!(format_bytes_per_sec(0.0), "0 B");
-        assert_eq!(format_bytes_per_sec(512.0), "512 B");
-        assert_eq!(format_bytes_per_sec(1024.0), "1.0 KB");
-        assert_eq!(format_bytes_per_sec(1048576.0), "1.00 MB");
-        assert_eq!(format_bytes_per_sec(1073741824.0), "1.00 GB");
+        assert_eq!(format_bytes_per_sec(0.0), "0  B");
+        assert_eq!(format_bytes_per_sec(512.0), "512  B");
+        assert_eq!(format_bytes_per_sec(1024.0), "1.0  KB");
+        assert_eq!(format_bytes_per_sec(1048576.0), "1.00  MB");
+        assert_eq!(format_bytes_per_sec(1073741824.0), "1.00  GB");
     }
 }
