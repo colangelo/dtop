@@ -1,6 +1,6 @@
 [package]
 name = "datop"
-version = "0.6.0-alpha"
+version = "0.6.0-a"
 edition = "2024"
 description = "A terminal-based Docker container monitoring tool with real-time CPU and memory metrics"
 license = "MIT"
