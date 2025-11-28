@@ -419,7 +419,7 @@ fn create_table<'a>(
         .block(
             Block::default()
                 .borders(Borders::NONE)
-                .padding(ratatui::widgets::Padding::proportional(1))
+                .padding(ratatui::widgets::Padding::top(1))
                 .title_top(title_left)
                 .title_top(title_right)
                 .style(styles.border),
