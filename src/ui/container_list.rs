@@ -83,7 +83,12 @@ fn create_container_row<'a>(
     // Only show stats for running containers
     let (cpu_bar, cpu_style) = if is_running {
         let display = if show_progress_bars {
-            create_cpu_sparkline(&container.stats.cpu_history, container.stats.cpu, 20)
+            create_cpu_sparkline(
+                &container.stats.cpu_history,
+                container.stats.cpu,
+                20,
+                container.stats.sample_count,
+            )
         } else {
             format!("{:5.1}%", container.stats.cpu)
         };
@@ -99,6 +104,7 @@ fn create_container_row<'a>(
                 container.stats.memory_used_bytes,
                 container.stats.memory_limit_bytes,
                 20,
+                container.stats.sample_count,
             )
         } else {
             format!("{:5.1}%", container.stats.memory)
@@ -182,27 +188,27 @@ fn create_memory_progress_bar(percentage: f64, used: u64, limit: u64, width: usi
 
 /// Creates a braille-based sparkline from historical percentage values
 /// Each character represents one sample, with height indicating the percentage
-/// Adds tick markers every TICK_INTERVAL positions to show time progression
-fn create_sparkline(history: &VecDeque<f64>, width: usize) -> String {
+/// Tick markers march with the data based on sample_count
+fn create_sparkline(history: &VecDeque<f64>, width: usize, sample_count: u64) -> String {
     let mut sparkline = String::with_capacity(width);
     let history_len = history.len();
 
-    // Pad with empty/tick chars if history is shorter than width
+    // Pad with empty chars if history is shorter than width
+    // Padding positions don't get ticks - ticks only appear in actual data
     let padding = width.saturating_sub(history_len);
-    for i in 0..padding {
-        if i % TICK_INTERVAL == 0 {
-            sparkline.push(BRAILLE_BARS_WITH_TICK[0]); // Empty with tick
-        } else {
-            sparkline.push(BRAILLE_BARS[0]);
-        }
+    for _ in 0..padding {
+        sparkline.push(BRAILLE_BARS[0]);
     }
 
     // Convert each percentage to a braille bar character
+    // Tick position is based on sample_count so ticks march with new data
     for (i, &value) in history.iter().enumerate() {
         let bar_index = percentage_to_bar_index(value);
-        let absolute_pos = padding + i;
-        if absolute_pos % TICK_INTERVAL == 0 {
-            // Use tick-marked version at interval positions
+        // Calculate which sample number this was (oldest sample in history)
+        // history[0] was added at sample_count - history_len + 1
+        // history[i] was added at sample_count - history_len + 1 + i
+        let sample_number = sample_count.saturating_sub(history_len as u64) + i as u64;
+        if sample_number % TICK_INTERVAL as u64 == 0 {
             sparkline.push(BRAILLE_BARS_WITH_TICK[bar_index]);
         } else {
             sparkline.push(BRAILLE_BARS[bar_index]);
@@ -229,8 +235,8 @@ fn percentage_to_bar_index(percentage: f64) -> usize {
 }
 
 /// Creates a CPU sparkline with percentage suffix
-fn create_cpu_sparkline(history: &VecDeque<f64>, current: f64, width: usize) -> String {
-    let sparkline = create_sparkline(history, width);
+fn create_cpu_sparkline(history: &VecDeque<f64>, current: f64, width: usize, sample_count: u64) -> String {
+    let sparkline = create_sparkline(history, width, sample_count);
     format!("{} {:5.1}%", sparkline, current)
 }
 
@@ -240,8 +246,9 @@ fn create_memory_sparkline(
     used: u64,
     limit: u64,
     width: usize,
+    sample_count: u64,
 ) -> String {
-    let sparkline = create_sparkline(history, width);
+    let sparkline = create_sparkline(history, width, sample_count);
     format!("{} {}/{}", sparkline, format_bytes(used), format_bytes(limit))
 }
 
@@ -446,13 +453,14 @@ mod tests {
     #[test]
     fn test_create_sparkline_empty_history() {
         let history = VecDeque::new();
-        let sparkline = create_sparkline(&history, 10);
+        // With empty history, all positions are padding (no ticks in padding)
+        let sparkline = create_sparkline(&history, 10, 0);
         assert_eq!(sparkline.chars().count(), 10);
-        // Should have tick markers at positions 0, 5 and empty elsewhere
         let chars: Vec<char> = sparkline.chars().collect();
-        assert_eq!(chars[0], BRAILLE_BARS_WITH_TICK[0]); // tick at 0
-        assert_eq!(chars[5], BRAILLE_BARS_WITH_TICK[0]); // tick at 5
-        assert_eq!(chars[1], BRAILLE_BARS[0]); // empty
+        // All padding - no ticks
+        for ch in chars {
+            assert_eq!(ch, BRAILLE_BARS[0]); // all empty, no ticks in padding
+        }
     }
 
     #[test]
@@ -461,17 +469,19 @@ mod tests {
         history.push_back(80.0); // full bar
         history.push_back(30.0); // 2 rows
 
-        let sparkline = create_sparkline(&history, 5);
+        // sample_count=2 means: history[0] is sample 0, history[1] is sample 1
+        let sparkline = create_sparkline(&history, 5, 2);
         let chars: Vec<char> = sparkline.chars().collect();
 
         assert_eq!(chars.len(), 5);
-        // First 3 should be padding (with tick at 0)
-        assert_eq!(chars[0], BRAILLE_BARS_WITH_TICK[0]); // tick at position 0
+        // First 3 should be padding (no ticks in padding)
+        assert_eq!(chars[0], BRAILLE_BARS[0]);
         assert_eq!(chars[1], BRAILLE_BARS[0]);
         assert_eq!(chars[2], BRAILLE_BARS[0]);
         // Last 2 should be from history
-        assert_eq!(chars[3], BRAILLE_BARS[4]); // 80% = full
-        assert_eq!(chars[4], BRAILLE_BARS[2]); // 30% = 2 rows
+        // history[0] = sample 0 (tick), history[1] = sample 1 (no tick)
+        assert_eq!(chars[3], BRAILLE_BARS_WITH_TICK[4]); // 80% with tick (sample 0)
+        assert_eq!(chars[4], BRAILLE_BARS[2]); // 30% = 2 rows (sample 1, no tick)
     }
 
     #[test]
@@ -481,11 +491,12 @@ mod tests {
             history.push_back(i as f64 * 25.0); // 0, 25, 50, 75, 100
         }
 
-        let sparkline = create_sparkline(&history, 5);
+        // sample_count=5: samples are 0,1,2,3,4 - tick only at sample 0
+        let sparkline = create_sparkline(&history, 5, 5);
         let chars: Vec<char> = sparkline.chars().collect();
 
         assert_eq!(chars.len(), 5);
-        assert_eq!(chars[0], BRAILLE_BARS_WITH_TICK[0]); // 0% with tick at position 0
+        assert_eq!(chars[0], BRAILLE_BARS_WITH_TICK[0]); // 0% with tick (sample 0)
         assert_eq!(chars[1], BRAILLE_BARS[2]); // 25%
         assert_eq!(chars[2], BRAILLE_BARS[3]); // 50%
         assert_eq!(chars[3], BRAILLE_BARS[4]); // 75%
@@ -500,12 +511,13 @@ mod tests {
             history.push_back(60.0);
         }
 
-        let sparkline = create_sparkline(&history, 10);
+        // sample_count=10: samples 0-9, ticks at 0 and 5
+        let sparkline = create_sparkline(&history, 10, 10);
         let chars: Vec<char> = sparkline.chars().collect();
 
         // Position 0 and 5 should have tick-marked bars (with hole)
-        assert_eq!(chars[0], BRAILLE_BARS_WITH_TICK[3]); // 60% with hole = ⢶
-        assert_eq!(chars[5], BRAILLE_BARS_WITH_TICK[3]); // 60% with hole = ⢶
+        assert_eq!(chars[0], BRAILLE_BARS_WITH_TICK[3]); // 60% with hole = ⢶ (sample 0)
+        assert_eq!(chars[5], BRAILLE_BARS_WITH_TICK[3]); // 60% with hole = ⢶ (sample 5)
         // Other positions should be regular bars
         assert_eq!(chars[1], BRAILLE_BARS[3]); // 60% full = ⣶
         assert_eq!(chars[2], BRAILLE_BARS[3]); // 60% full = ⣶
@@ -519,7 +531,7 @@ mod tests {
         history.push_back(50.0);
         history.push_back(75.0);
 
-        let result = create_cpu_sparkline(&history, 42.5, 5);
+        let result = create_cpu_sparkline(&history, 42.5, 5, 2);
         assert!(result.contains("42.5%"));
         assert_eq!(result.chars().filter(|c| *c == '%').count(), 1);
     }
@@ -529,8 +541,34 @@ mod tests {
         let mut history = VecDeque::new();
         history.push_back(50.0);
 
-        let result = create_memory_sparkline(&history, 512 * 1024 * 1024, 1024 * 1024 * 1024, 5);
+        let result = create_memory_sparkline(&history, 512 * 1024 * 1024, 1024 * 1024 * 1024, 5, 1);
         assert!(result.contains("512M/1G"));
+    }
+
+    #[test]
+    fn test_sparkline_marching_ticks() {
+        // Simulate history buffer that marches as new samples come in
+        let mut history = VecDeque::new();
+        for _ in 0..5 {
+            history.push_back(50.0); // 3 rows
+        }
+
+        // At sample_count=5: samples 0-4, tick at position 0
+        let sparkline1 = create_sparkline(&history, 5, 5);
+        let chars1: Vec<char> = sparkline1.chars().collect();
+        assert_eq!(chars1[0], BRAILLE_BARS_WITH_TICK[3]); // tick at sample 0
+
+        // At sample_count=6: samples 1-5, tick at position 4 (sample 5)
+        let sparkline2 = create_sparkline(&history, 5, 6);
+        let chars2: Vec<char> = sparkline2.chars().collect();
+        assert_eq!(chars2[0], BRAILLE_BARS[3]); // no tick at sample 1
+        assert_eq!(chars2[4], BRAILLE_BARS_WITH_TICK[3]); // tick at sample 5
+
+        // At sample_count=10: samples 5-9, tick at position 0 (sample 5)
+        let sparkline3 = create_sparkline(&history, 5, 10);
+        let chars3: Vec<char> = sparkline3.chars().collect();
+        assert_eq!(chars3[0], BRAILLE_BARS_WITH_TICK[3]); // tick at sample 5
+        assert_eq!(chars3[4], BRAILLE_BARS[3]); // no tick at sample 9
     }
 
     #[test]
