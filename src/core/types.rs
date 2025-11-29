@@ -8,6 +8,11 @@ use crate::docker::logs::LogEntry;
 /// Maximum number of samples to keep in history buffers for sparkline display
 pub const HISTORY_BUFFER_SIZE: usize = 20;
 
+/// Duration in seconds for each history bucket (sparkline position)
+/// This controls how often history samples are recorded.
+/// Tick markers appear every TICK_INTERVAL buckets.
+pub const BUCKET_DURATION_SECS: u64 = 2;
+
 /// Host identifier for tracking which Docker host a container belongs to
 pub type HostId = String;
 
@@ -105,6 +110,9 @@ pub struct ContainerStats {
     pub cpu_history: VecDeque<f64>,
     /// Historical memory usage values for sparkline display
     pub memory_history: VecDeque<f64>,
+    /// The bucket ID (wall_clock_secs / BUCKET_DURATION_SECS) of the most recent history entry
+    /// Used to synchronize history updates with tick markers
+    pub last_history_bucket: u64,
 }
 
 impl Default for ContainerStats {
@@ -118,6 +126,7 @@ impl Default for ContainerStats {
             network_rx_bytes_per_sec: 0.0,
             cpu_history: VecDeque::with_capacity(HISTORY_BUFFER_SIZE),
             memory_history: VecDeque::with_capacity(HISTORY_BUFFER_SIZE),
+            last_history_bucket: 0,
         }
     }
 }

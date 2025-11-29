@@ -2,7 +2,9 @@ use std::collections::VecDeque;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::core::app_state::AppState;
-use crate::core::types::{Container, ContainerState, HealthStatus, SortField, SortState};
+use crate::core::types::{
+    Container, ContainerState, HealthStatus, SortField, SortState, BUCKET_DURATION_SECS,
+};
 use crate::ui::formatters::{format_bytes, format_bytes_per_sec, format_time_elapsed};
 use crate::ui::render::UiStyles;
 use ratatui::{
@@ -51,12 +53,12 @@ pub fn render_container_list(
     // Determine if we should show progress bars based on terminal width
     let show_progress_bars = width >= 128;
 
-    // Get global tick counter from wall clock time (half-seconds since epoch)
-    // Dividing by 2 makes ticks advance every 2 seconds for smoother animation
-    // This ensures all containers have synchronized tick markers
+    // Get global tick counter from wall clock time
+    // Using BUCKET_DURATION_SECS ensures ticks align with history sample rate
+    // This keeps tick markers and data synchronized across all containers
     let global_tick = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_secs() / 2)
+        .map(|d| d.as_secs() / BUCKET_DURATION_SECS)
         .unwrap_or(0);
 
     // Use pre-sorted list instead of sorting every frame

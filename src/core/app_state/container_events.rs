@@ -1,8 +1,19 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use crate::core::app_state::AppState;
 use crate::core::types::{
     Container, ContainerKey, ContainerState, ContainerStats, HealthStatus, RenderAction,
-    HISTORY_BUFFER_SIZE,
+    BUCKET_DURATION_SECS, HISTORY_BUFFER_SIZE,
 };
+
+/// Returns the current time bucket ID for history synchronization.
+/// This aligns with the tick marker calculation in the sparkline renderer.
+fn get_current_bucket() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs() / BUCKET_DURATION_SECS)
+        .unwrap_or(0)
+}
 
 impl AppState {
     pub(super) fn handle_initial_container_list(
@@ -78,26 +89,39 @@ impl AppState {
         mut stats: ContainerStats,
     ) -> RenderAction {
         if let Some(container) = self.containers.get_mut(&key) {
-            // Preserve existing history and append new values
+            // Preserve existing history
             let mut cpu_history = std::mem::take(&mut container.stats.cpu_history);
             let mut memory_history = std::mem::take(&mut container.stats.memory_history);
+            let last_bucket = container.stats.last_history_bucket;
 
-            // Add new values to history
-            cpu_history.push_back(stats.cpu);
-            memory_history.push_back(stats.memory);
+            // Get current time bucket (synchronized with tick markers)
+            let current_bucket = get_current_bucket();
 
-            // Cap history at max size
-            while cpu_history.len() > HISTORY_BUFFER_SIZE {
-                cpu_history.pop_front();
-            }
-            while memory_history.len() > HISTORY_BUFFER_SIZE {
-                memory_history.pop_front();
+            // Only add to history if we've moved to a new time bucket
+            // This ensures history samples align with tick marker intervals
+            if current_bucket > last_bucket {
+                cpu_history.push_back(stats.cpu);
+                memory_history.push_back(stats.memory);
+
+                // Cap history at max size
+                while cpu_history.len() > HISTORY_BUFFER_SIZE {
+                    cpu_history.pop_front();
+                }
+                while memory_history.len() > HISTORY_BUFFER_SIZE {
+                    memory_history.pop_front();
+                }
+
+                stats.last_history_bucket = current_bucket;
+            } else {
+                // Keep the existing bucket ID if we haven't moved to a new bucket
+                stats.last_history_bucket = last_bucket;
             }
 
             // Assign history to the new stats
             stats.cpu_history = cpu_history;
             stats.memory_history = memory_history;
 
+            // Always update displayed values (responsive current values)
             container.stats = stats;
         }
         RenderAction::None // No force draw - just stats update

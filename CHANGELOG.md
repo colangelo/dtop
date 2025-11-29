@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
   - Empty positions show dot (⡀), filled positions show "hole" pattern (⢀⢤⢶⢿)
   - Ticks advance every 2 seconds, synchronized across all containers using wall clock time
 - **Sparkline borders**: Box drawing characters (`│`) frame the sparkline graphs for visual clarity
+- **Time-bucketed sampling**: History samples align with tick intervals using configurable `BUCKET_DURATION_SECS`, preventing data from overtaking tick markers and enabling future update rate customization
 
 ### UI Redesign
 
