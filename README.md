@@ -1,7 +1,8 @@
-# 🖥️ dtop
+<div align="center">
+  <img src="docs/dtop-icon.svg" alt="dtop logo" width="150" height="150">  
+</div>
 
-> [!IMPORTANT]
-> `dtop` has been rewritten in Rust on the `master` branch. The Go version is available on the `v1` branch. Version v0.3.x is the first release of the Rust version. There are some breaking changes compared to the previous version.
+# 🖥️ dtop
 
 A terminal based dashboard for Docker that monitors multiple hosts in real-time.
 
@@ -36,6 +37,17 @@ A terminal based dashboard for Docker that monitors multiple hosts in real-time.
 
 ## Installation
 `dtop` can be installed through multiple package managers or by downloading the binary directly.
+
+### Homebrew
+
+Install using Homebrew for macOS or Linux (recommended):
+
+```sh
+brew install --cask amir20/homebrew-dtop/dtop
+```
+
+> [!NOTE]
+> Homebrew is recommended as `dtop` is in active development with frequent updates. Using Homebrew will automatically upgrade `dtop`. 
 
 
 ### Docker
@@ -96,7 +108,7 @@ Commands:
 Options:
   -H, --host <HOST>
           Docker host(s) to connect to. Can be specified multiple times.
-
+          
           Examples:
             --host local                    (Connect to local Docker daemon)
             --host ssh://user@host          (Connect via SSH)
@@ -104,24 +116,59 @@ Options:
             --host tcp://host:2375          (Connect via TCP to remote Docker daemon)
             --host tls://host:2376          (Connect via TLS)
             --host local --host ssh://user@server1 --host tls://server2:2376  (Multiple hosts)
-
+          
           For TLS connections, set DOCKER_CERT_PATH to a directory containing:
             key.pem, cert.pem, and ca.pem
-
+          
           If not specified, will use config file or default to "local"
 
   -i, --icons <ICONS>
-          Icon style to use for the UI [default: unicode]
-
+          Icon style to use for the UI
+          
           Options:
-            unicode  - Standard Unicode icons (works everywhere)
+            unicode  - Standard Unicode icons (default, works everywhere)
             nerd     - Nerd Font icons (requires Nerd Font installed)
+
+  -f, --filter <FILTER>
+          Filter containers (can be specified multiple times)
+          
+          Examples:
+            --filter status=running
+            --filter name=nginx
+            --filter label=com.example.version=1.0
+            --filter ancestor=ubuntu:24.04
+          
+          Multiple filters of the same type use OR logic:
+            --filter status=running --filter status=paused
+          
+          Different filter types use AND logic:
+            --filter status=running --filter name=nginx
+          
+          Available filters:
+            id, name, label, status, ancestor, before, since,
+            volume, network, publish, expose, health, exited
+          
+          Note: Some filters only work with container listing, not events.
+          Warnings will be shown if a filter is incompatible with events.
+
+  -a, --all
+          Show all containers (default shows only running containers)
+          
+          By default, dtop only shows running containers.
+          Use this flag to show all containers including stopped, exited, and paused containers.
+          
+          Note: This flag can only enable showing all containers, not disable it.
+          If your config file has 'all: true', you'll need to edit the config file
+          or press 'a' in the UI to toggle back to showing only running containers.
+          
+          This is equivalent to pressing 'a' in the UI to toggle show all.
 
   -h, --help
           Print help (see a summary with '-h')
 
   -V, --version
           Print version
+
 ```
 
 ## Configuration File
@@ -139,13 +186,34 @@ Options:
 Here's an example configuration:
 
 ```yaml
+# Monitor production servers with filters and Dozzle integration
+hosts:
+  - host: ssh://user@prod-server1
+    dozzle: https://dozzle.prod-server1.com/
+    filter:
+      - status=running
+      - label=environment=production
+
+  - host: ssh://user@prod-server2
+    dozzle: https://dozzle.prod-server2.com/
+    filter:
+      - status=running
+      - label=environment=production
+
+# Use Nerd Font icons for better visuals
+icons: nerd
+```
+
+**Or monitor specific application stacks:**
+
+```yaml
+# Development environment - only show healthy web services
 hosts:
   - host: local
-    dozzle: http://localhost:3100/ # this is optional
-  - host: tcp://host2:2375
-    dozzle: http://host2:3100/
-  - host: ssh://user@host
-    dozzle: http://host:8080/
+    filter:
+      - label=app=web
+      - status=running
+      - health=healthy
 ```
 
 See [config.example.yaml](https://github.com/amir20/dtop/blob/master/config.example.yaml) for more examples.

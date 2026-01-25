@@ -44,7 +44,7 @@ impl Default for UiStyles {
             header: Style::default()
                 .fg(Color::Rgb(140, 100, 180))
                 .add_modifier(Modifier::BOLD),
-            border: Style::default().fg(Color::White),
+            border: Style::default(),
             selected: Style::default()
                 .bg(Color::DarkGray)
                 .add_modifier(Modifier::BOLD),

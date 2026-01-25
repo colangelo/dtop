@@ -34,6 +34,10 @@ cargo run -- --host ssh://user@host         # Run with remote Docker host via SS
 cargo run -- --host tcp://host:2375         # Run with remote Docker host via TCP
 cargo run -- --host tls://host:2376         # Run with remote Docker host via TLS
 cargo run -- --host local --host ssh://user@host1 --host tcp://host2:2375  # Multiple hosts
+cargo run -- --filter status=running        # Filter to show only running containers
+cargo run -- --filter name=nginx --filter label=env=prod  # Multiple filters
+cargo run -- --all                           # Show all containers (including stopped/exited)
+cargo run -- -a                              # Short version of --all
 
 # Self-update
 cargo run -- update                          # Update dtop to the latest version
@@ -77,23 +81,91 @@ Example config file (`config.yaml`):
 hosts:
   - host: local
   - host: ssh://user@server1
+    filter:
+      - status=running
+      - label=environment=production
   - host: tcp://192.168.1.100:2375
   - host: ssh://root@146.190.3.114
     dozzle: https://l.dozzle.dev/
+    filter:
+      - name=nginx
+      - ancestor=ubuntu:24.04
 
 # Icon style: "unicode" (default) or "nerd" (requires Nerd Font)
 icons: unicode
+
+# Show all containers (default: false, shows only running containers)
+# Set to true to show all containers including stopped, exited, and paused containers
+all: false
 ```
 
 Each host entry is a struct with:
 - `host`: Docker connection string (required)
 - `dozzle`: Optional URL to Dozzle instance
+- `filter`: Optional list of Docker filters (e.g., ["status=running", "name=nginx"])
 - Future optional fields can be added as needed
 
 Global config options:
 - `icons`: Icon style to use ("unicode" or "nerd")
+- `all`: Show all containers including stopped/exited (default: false)
 
 See `config.example.yaml` for a complete example.
+
+### Show All Containers
+
+The `--all` / `-a` flag controls whether to show all containers or only running containers:
+
+- **CLI**: `--all` or `-a` flag (boolean, follows `docker ps -a` convention)
+- **Config file**: `all: true/false` in YAML
+
+**Behavior:**
+- By default, only running containers are shown
+- The `--all` flag enables showing all containers (including stopped, exited, paused)
+- The flag is **one-way enable only**: it can enable showing all containers but cannot disable it
+- If config has `all: true`, the CLI flag cannot override it back to false
+- Users can always toggle the view with the 'a' key in the UI
+
+**Examples:**
+```bash
+dtop --all              # Show all containers
+dtop -a                 # Short version
+dtop                    # Show running only (unless config has all: true)
+```
+
+**Note:** This design matches Docker's `docker ps -a` behavior where the flag is a simple boolean enable.
+
+### Container Filtering
+
+The application supports Docker filters similar to `docker ps --filter`. Filters can be specified via:
+- **CLI**: `--filter` or `-f` flag (applies to all hosts)
+- **Config file**: Per-host `filter` field in YAML (host-specific filters)
+
+**CLI filters take precedence over config file filters.**
+
+Available filters (container listing):
+- `id` - Container ID (full or partial)
+- `name` - Container name (supports partial matches)
+- `label` - Label key or key=value pair
+- `status` - Container state: created, restarting, running, removing, paused, exited, dead
+- `ancestor` - Image name/tag or descendant
+- `before` - Created before container ID/name
+- `since` - Created after container ID/name
+- `volume` - Mounted volume or path
+- `network` - Connected network
+- `publish`/`expose` - Published/exposed ports
+- `health` - Healthcheck status: starting, healthy, unhealthy, none
+- `exited` - Exit code
+- `isolation` - Isolation type (Windows only)
+- `is-task` - Service task containers (boolean)
+
+**Filter Logic:**
+- Multiple values for same filter = OR logic: `--filter status=running --filter status=paused`
+- Different filter types = AND logic: `--filter status=running --filter name=nginx`
+
+**Events API Compatibility:**
+Some filters only work with container listing, not the events stream. The application will log warnings for incompatible filters (e.g., `status`, `ancestor`, `health`) that won't apply to real-time event monitoring. Compatible filters for both listing and events include: `label`, `network`, `volume`.
+
+Filters `id` and `name` are automatically mapped to the `container` filter for events API compatibility.
 
 ## Architecture
 
@@ -107,6 +179,8 @@ The codebase is organized into logical modules:
 src/
 ├── cli/                   # CLI-related modules
 │   ├── config.rs         # Configuration file loading (YAML)
+│   ├── connect.rs        # Docker host connection and verification
+│   ├── filters.rs        # Docker filter parsing (--filter support)
 │   └── update.rs         # Self-update functionality
 │
 ├── core/                  # Core application logic
@@ -585,7 +659,10 @@ The `CHANGELOG.md` file is automatically maintained and should be committed to t
 - Keyboard polling is 200ms to balance responsiveness and CPU
 - Styles are pre-allocated in `UiStyles::default()` to avoid allocations during rendering
 - Container references (not clones) are used when building UI rows
-- Containers are pre-sorted once when added/removed, not on every frame
+- **Container sorting is throttled to once every 3 seconds** to avoid re-sorting on every render frame (stats updates are constant)
+  - User-initiated sort changes (field selection, search, toggle filters) bypass throttle for immediate response
+  - Container add/remove events also bypass throttle to maintain correctness
+  - This reduces sorting from ~2/sec to ~0.33/sec during normal operation (~83% reduction)
 - Exponential smoothing (alpha=0.3) reduces noise in stats without heavy computation
 - Failed host connections are logged but don't prevent other hosts from being monitored
 - Log streaming is only active when viewing a container's logs (stopped when exiting log view)

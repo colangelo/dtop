@@ -54,6 +54,8 @@ pub struct AppState {
     pub search_input: Input,
     /// Connection errors to display (host_id -> (error_message, timestamp))
     pub connection_errors: HashMap<HostId, (String, Instant)>,
+    /// Last time containers were sorted (for throttling)
+    pub last_sort_time: Instant,
 }
 
 impl AppState {
@@ -61,6 +63,7 @@ impl AppState {
     pub fn new(
         connected_hosts: HashMap<String, DockerHost>,
         event_tx: mpsc::Sender<AppEvent>,
+        show_all: bool,
     ) -> Self {
         // Detect if running in SSH session
         let is_ssh_session = std::env::var("SSH_CLIENT").is_ok()
@@ -81,10 +84,11 @@ impl AppState {
             is_ssh_session,
             show_help: false,
             sort_state: SortState::default(), // Default to Created descending
-            show_all_containers: false,       // Default to showing only running containers
+            show_all_containers: show_all,
             action_menu_state: ListState::default(), // Default to no selection
             search_input: Input::default(),
             connection_errors: HashMap::new(),
+            last_sort_time: Instant::now(),
         }
     }
 

@@ -4,6 +4,7 @@ mod docker;
 mod ui;
 
 use clap::Parser;
+use clap::builder::styling::{AnsiColor, Effects, Styles};
 use crossterm::{
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
@@ -27,9 +28,27 @@ use ui::icons::IconStyle;
 use ui::input::keyboard_worker;
 use ui::render::{UiStyles, render_ui};
 
+/// Returns custom styles for CLI help output
+fn get_styles() -> Styles {
+    Styles::styled()
+        .header(AnsiColor::Green.on_default() | Effects::BOLD)
+        .usage(AnsiColor::Cyan.on_default() | Effects::BOLD)
+        .literal(AnsiColor::BrightBlue.on_default())
+        .placeholder(AnsiColor::Yellow.on_default())
+        .error(AnsiColor::Red.on_default() | Effects::BOLD)
+        .valid(AnsiColor::Green.on_default())
+        .invalid(AnsiColor::Red.on_default())
+}
+
 /// Docker container monitoring TUI
 #[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
+#[command(
+    author,
+    version,
+    about,
+    long_about = None,
+    styles = get_styles()
+)]
 struct Args {
     #[command(subcommand)]
     command: Option<Command>,
@@ -56,8 +75,44 @@ struct Args {
     /// Options:
     ///   unicode  - Standard Unicode icons (default, works everywhere)
     ///   nerd     - Nerd Font icons (requires Nerd Font installed)
-    #[arg(short = 'i', long)]
+    #[arg(short = 'i', long, verbatim_doc_comment)]
     icons: Option<String>,
+
+    /// Filter containers (can be specified multiple times)
+    ///
+    /// Examples:
+    ///   --filter status=running
+    ///   --filter name=nginx
+    ///   --filter label=com.example.version=1.0
+    ///   --filter ancestor=ubuntu:24.04
+    ///
+    /// Multiple filters of the same type use OR logic:
+    ///   --filter status=running --filter status=paused
+    ///
+    /// Different filter types use AND logic:
+    ///   --filter status=running --filter name=nginx
+    ///
+    /// Available filters:
+    ///   id, name, label, status, ancestor, before, since,
+    ///   volume, network, publish, expose, health, exited
+    ///
+    /// Note: Some filters only work with container listing, not events.
+    /// Warnings will be shown if a filter is incompatible with events.
+    #[arg(short = 'f', long = "filter", verbatim_doc_comment)]
+    filter: Vec<String>,
+
+    /// Show all containers (default shows only running containers)
+    ///
+    /// By default, dtop only shows running containers.
+    /// Use this flag to show all containers including stopped, exited, and paused containers.
+    ///
+    /// Note: This flag can only enable showing all containers, not disable it.
+    /// If your config file has 'all: true', you'll need to edit the config file
+    /// or press 'a' in the UI to toggle back to showing only running containers.
+    ///
+    /// This is equivalent to pressing 'a' in the UI to toggle show all.
+    #[arg(short = 'a', long = "all", verbatim_doc_comment)]
+    all: bool,
 }
 
 #[derive(clap::Subcommand, Debug)]
@@ -105,16 +160,26 @@ async fn run_async(args: Args) -> Result<(), Box<dyn std::error::Error>> {
     // Merge config with CLI args (CLI takes precedence)
     let merged_config = if cli_provided {
         // User explicitly provided --host, use CLI args
-        config.merge_with_cli_hosts(args.host.clone(), false)
+        config.merge_with_cli_hosts(args.host.clone(), false, args.filter.clone(), args.all)
     } else if !config.hosts.is_empty() {
         // No CLI args but config has hosts, use config
         if let Some(path) = config_path {
             eprintln!("Loaded config from: {}", path.display());
         }
-        config
+        config.merge_with_cli_hosts(
+            vec!["local".to_string()],
+            true,
+            args.filter.clone(),
+            args.all,
+        )
     } else {
         // Neither CLI nor config provided hosts, use default "local"
-        config.merge_with_cli_hosts(vec!["local".to_string()], true)
+        config.merge_with_cli_hosts(
+            vec!["local".to_string()],
+            true,
+            args.filter.clone(),
+            args.all,
+        )
     };
 
     // Determine icon style (CLI takes precedence over config)
@@ -128,6 +193,9 @@ async fn run_async(args: Args) -> Result<(), Box<dyn std::error::Error>> {
         // Default to unicode
         IconStyle::Unicode
     };
+
+    // Determine show_all setting (CLI or config, defaults to false)
+    let show_all = merged_config.all.unwrap_or(false);
 
     // Create event channel
     let (tx, mut rx) = mpsc::channel::<AppEvent>(1000);
@@ -165,6 +233,7 @@ async fn run_async(args: Args) -> Result<(), Box<dyn std::error::Error>> {
         connected_hosts,
         keyboard_paused,
         icon_style,
+        show_all,
     )
     .await?;
 
@@ -215,8 +284,9 @@ async fn run_event_loop(
     connected_hosts: HashMap<String, DockerHost>,
     keyboard_paused: Arc<AtomicBool>,
     icon_style: IconStyle,
+    show_all: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let mut state = AppState::new(connected_hosts, tx);
+    let mut state = AppState::new(connected_hosts, tx, show_all);
     let draw_interval = Duration::from_millis(500); // Refresh UI every 500ms
     let mut last_draw = std::time::Instant::now();
 
@@ -235,9 +305,7 @@ async fn run_event_loop(
                     keyboard_paused.store(true, Ordering::Relaxed);
 
                     // Run shell session - this blocks until shell exits
-                    if let Err(e) =
-                        docker::shell::run_shell_session(host, &container_key.container_id).await
-                    {
+                    if let Err(e) = host.run_shell_session(&container_key.container_id).await {
                         tracing::error!("Shell session error: {}", e);
                     }
 

@@ -2,7 +2,7 @@
 source: src/ui/ui_tests.rs
 expression: output
 ---
-datop vX.X.X-a - 3 containers                                                                                                       '?' help, 'q' quit
+datop vX.X.X-alpha - 3 containers                                                                                                   '?' help, 'q' quit
                                                                                                                                                       
 ID             Name     Host                 CPU %                          Memory %                         NetTx/s      NetRx/s      Created ▼      
 abc123456789 ▶ nginx    local                │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│  25.5%  │⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀│ 431 M/954      1.0· KB      2.0· KB 2 hours ago    

@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.6.0-a] - 2025-11-28
+## [0.7.0-alpha] - Unreleased
 
 ### Features
 
@@ -24,6 +24,17 @@ All notable changes to this project will be documented in this file.
 - **Container IDs**: Dark gray
 - **Network columns**: TX (upload) in pink/magenta, RX (download) in cyan/blue
 - **Created timestamp**: Dark gray
+
+### Merged from upstream
+
+- Adds a flag to show all containers by default (#179)
+- Always sorts when showing containers (#177)
+- Adds color to help (#173)
+- Supports --filter to filter containers (#172)
+- Changes scrollback to all so that everything is loaded and adds page up and down keyboard shortcuts (#154)
+- Adds pagination to logs (#158)
+- Adds scrollbar to the right of log view (#159)
+- Improves position of scrollbar (#163)
 
 ## [0.5.0] - 2025-11-22
 

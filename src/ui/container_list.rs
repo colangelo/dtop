@@ -61,6 +61,8 @@ pub fn render_container_list(
         .map(|d| d.as_secs() / BUCKET_DURATION_SECS)
         .unwrap_or(0);
 
+    app_state.sort_containers();
+
     // Use pre-sorted list instead of sorting every frame
     let rows: Vec<Row> = app_state
         .sorted_container_keys
