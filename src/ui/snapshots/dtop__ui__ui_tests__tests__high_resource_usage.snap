@@ -2,7 +2,7 @@
 source: src/ui/ui_tests.rs
 expression: output
 ---
-dtop vX.X.X-alpha - 3 containers                                                                      '?' help, 'q' quit
+dtop vX.X.X - 3 containers                                                                            '?' help, 'q' quit
                                                                                                                         
 ID             Name                                            CPU %   Memory  NetTx/s      NetRx/s      Created ▼      
 low12345678  ▶ low-usage                                        15.0%   20.0%        100· B       200· B 2 hours ago    
