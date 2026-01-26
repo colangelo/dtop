@@ -15,9 +15,9 @@ All notable changes to this project will be documented in this file.
 
 ### UI Redesign
 
-- **Rename**: App renamed from `dtop` to `datop`
+- **UI styling overhaul**: New color scheme for title bar and columns
 - **Title bar styling**:
-  - App name "datop vX.X.X" in dark purple
+  - App name "dtop vX.X.X" in dark purple
   - Container count "N containers" in yellow
   - Help text "'?' help, 'q' quit" right-aligned in dark gray
 - **Column headers**: Changed from cyan to dark purple

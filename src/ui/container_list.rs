@@ -404,9 +404,9 @@ fn create_table<'a>(
         Constraint::Length(15),        // Created
     ]);
 
-    // Build styled title: "datop" in purple, version in gray, count in yellow
+    // Build styled title: "dtop" in purple, version in gray, count in yellow
     let title_left = Line::from(vec![
-        Span::styled("datop", styles.title_name),
+        Span::styled("dtop", styles.title_name),
         Span::styled(format!(" v{}", VERSION), styles.title_help),
         Span::styled(" - ", styles.title_help),
         Span::styled(format!("{} containers", container_count), styles.title_count),
