@@ -27,6 +27,8 @@ All notable changes to this project will be documented in this file.
 
 ### Merged from upstream
 
+- Supports sort config in cli and config (#213)
+- Nix flake for running pre-built binaries and building from source (#215)
 - Adds a flag to show all containers by default (#179)
 - Always sorts when showing containers (#177)
 - Adds color to help (#173)
